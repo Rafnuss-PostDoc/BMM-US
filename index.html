@@ -12,71 +12,147 @@ body { margin: 0; padding: 0; }
 </style>
 </head>
 <body>
+    <style>
+        #menu {
+position: absolute;
+background: #efefef;
+padding: 10px;
+font-family: 'Open Sans', sans-serif;
+}
+    </style>
 <div id="map"></div>
+<div id="menu">
+    <input id="estimation" type="radio" name="rtoggle" value="estimation">
+    <label for="estimation">Estimation</label>
+    <input id="simulation" type="radio" name="rtoggle" value="simulation" checked>
+    <label for="simulation">Simulation</label>
+    <input id="slider-opacity" type="range" min="0" max="100" step="1" value="70">
+    <button id="playpause">Play/pause</button>
+</div>
 <script>
 	mapboxgl.accessToken = 'pk.eyJ1IjoicmFmbnVzcyIsImEiOiIzMVE1dnc0In0.3FNMKIlQ_afYktqki-6m0g';
-    const videoStyle = {
-        'version': 8,
-        'sources': {
-            'satellite': {
-                'type': 'raster',
-                'url': 'mapbox://mapbox.satellite',
-                'tileSize': 256
-            },
-            'video': {
-                'type': 'video',
-                'urls': [
-                    'https://rafnuss-postdoc.github.io/BMM-US/assets/estimation_daily_test3.webm',
-                    'https://rafnuss-postdoc.github.io/BMM-US/assets/estimation_daily_test2.mp4'
-                ],
-                'coordinates': [
-                    [-125, 50],
-                    [-68, 50],
-                    [-68, 23],
-                    [-125, 23]
-                ]
-            }
-        },
-        'layers': [
-            {
-                'id': 'background',
-                'type': 'background',
-                'paint': {
-                    'background-color': 'rgb(4,7,14)'
-                }
-            },
-            {
-                'id': 'satellite',
-                'type': 'raster',
-                'source': 'satellite'
-            },
-            {
-                'id': 'video',
-                'type': 'raster',
-                'source': 'video'
-            }
-        ]
-    };
 
     const map = new mapboxgl.Map({
         container: 'map',
         minZoom: 2,
-        zoom: 5,
+        zoom: 3,
         center: [-105.5411291, 38.9607531,],
-        style: videoStyle
     });
 
-    let playingVideo = true;
+    map.addSource('satellite', {
+    'type': 'raster',
+    'url': 'mapbox://mapbox.satellite',
+    });
+
+    map.addSource('video-estimation', {
+        'type': 'video',
+                'urls': [
+                    'https://rafnuss-postdoc.github.io/BMM-US/assets/estimation_daily.webm'
+                ],
+                'coordinates': [
+                    [-125, 50],
+                    [-67, 50],
+                    [-67, 23],
+                    [-125, 23]
+                ]
+    });
+
+    map.addSource('video-simulation', {
+        'type': 'video',
+                'urls': [
+                    'https://rafnuss-postdoc.github.io/BMM-US/assets/simulation_daily.webm'
+                ],
+                'coordinates': [
+                    [-125, 50],
+                    [-67, 50],
+                    [-67, 23],
+                    [-125, 23]
+                ]
+    });
+
+    map.addLayer({
+        'id': 'satellite',
+        'type': 'raster',
+        'source': 'satellite'
+    });
+
+    map.addLayer({
+        'id': 'video-simulation',
+        'type': 'raster',
+        'source': 'video-simulation',
+        paint: {
+            'raster-opacity':.7
+        }
+    });
+
+    map.addLayer({
+        'id': 'video-estimation',
+        'type': 'raster',
+        'source': 'video-estimation',
+        layout:{
+            'visibility' : 'none',
+        },
+        paint: {
+            'raster-opacity':.7
+        }
+    });
+
+    document.getElementById('simulation').onclick = () => {
+        map.setLayoutProperty('video-simulation', 'visibility', 'visible');
+        map.setLayoutProperty('video-estimation', 'visibility', 'none');
+    };
+
+    document.getElementById('estimation').onclick = () => {
+        map.setLayoutProperty('video-simulation', 'visibility', 'none');
+        map.setLayoutProperty('video-estimation', 'visibility', 'visible');
+    };
+
+    document.getElementById('slider-opacity').addEventListener('input', (e) => {
+        map.setPaintProperty(
+        'video-simulation',
+        'raster-opacity',
+        parseInt(e.target.value, 10) / 100
+    )
+    map.setPaintProperty(
+        'video-estimation',
+        'raster-opacity',
+        parseInt(e.target.value, 10) / 100
+    )
+    window.addEventListener('load', (event) => {
+
+        console.log('page is fully loaded');
+    document.getElementById('playpause').addEventListener("click", function(){
+        videoSource = map.getSource('video-simulation')
+        videoHTML = videoSource.getVideo();
+        console.log('est')
+        if (videoHTML.paused) {
+            map.getSource('video-simulation').play()
+            map.getSource('video-estimation').play()
+        } else {
+            map.getSource('video-simulation').pause()
+            map.getSource('video-estimation').pause()
+        }
+})
+});
+
+
+
+    /*let playingVideo = true;
 
     map.on('click', () => {
         playingVideo = !playingVideo;
 
         if (playingVideo) {
-            map.getSource('video').play();
+            map.getSource('video-simulation').play();
         } else {
-            map.getSource('video').pause();
+            map.getSource('video-simulation').pause();
         }
     });
+    */
+
+});
+
+
 </script>
 
 </body>
