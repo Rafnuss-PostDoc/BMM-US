@@ -26,13 +26,14 @@ body { margin: 0; padding: 0; }
             'video': {
                 'type': 'video',
                 'urls': [
-                    'https://www.dropbox.com/s/cq68e16nstcb148/estimation_daily_qnmp5z%20%281%29.avi'
+                    'https://rafnuss-postdoc.github.io/BMM-US/assets/estimation_daily_test3.webm',
+                    'https://rafnuss-postdoc.github.io/BMM-US/assets/estimation_daily_test2.mp4'
                 ],
                 'coordinates': [
-                    [-122.51596391201019, 37.56238816766053],
-                    [-122.51467645168304, 37.56410183312965],
-                    [-122.51309394836426, 37.563391708549425],
-                    [-122.51423120498657, 37.56161849366671]
+                    [-125, 50],
+                    [-68, 50],
+                    [-68, 23],
+                    [-125, 23]
                 ]
             }
         },
@@ -59,10 +60,9 @@ body { margin: 0; padding: 0; }
 
     const map = new mapboxgl.Map({
         container: 'map',
-        minZoom: 14,
-        zoom: 17,
-        center: [-122.514426, 37.562984],
-        bearing: -96,
+        minZoom: 2,
+        zoom: 5,
+        center: [-105.5411291, 38.9607531,],
         style: videoStyle
     });
 
