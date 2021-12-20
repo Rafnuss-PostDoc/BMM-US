@@ -58,7 +58,7 @@
         </datalist>
         <span id="speed-label">x1</span>
         <br>
-        <input id="slider-time" type="range" min="1" max="365" value="0" step="1" list="steplist-time" style="width: 75%;">
+        <input id="slider-time" type="range" min="0" max="366" value="0" step="1" list="steplist-time" style="width: 75%;">
         <datalist id="steplist-time">
             <option>1</option>
             <option>32</option>
@@ -179,7 +179,7 @@
         });
 
         document.getElementById('slider-time').addEventListener('input', (e) => {
-            videoEstHTML.currentTime = e.target.value*videoEstHTML.duration/365
+            videoEstHTML.currentTime = e.target.value*videoEstHTML.duration/366
             //videoSimHTML.currentTime = e.target.value*videoSimHTML.duration/365
         });
 
@@ -188,9 +188,9 @@
 
         function myVideoUpdate(e) {
             let r = e.target.currentTime/videoEstHTML.duration
-            document.getElementById('slider-time').value = r*365
+            document.getElementById('slider-time').value = r*366
             var date = new Date(2000, 0);
-            new Date(date.setDate(r*365));
+            new Date(date.setDate(r*366+1));
             document.getElementById("time-label").innerHTML = date.toLocaleDateString("en-US", { weekday: undefined, year: 'numeric', month: 'long', day: 'numeric' });
         }
 
