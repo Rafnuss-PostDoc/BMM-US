@@ -33,10 +33,10 @@
     </style>
     <div id="map"></div>
     <div id="menu">
-        <input id="estimation" type="radio" name="rtoggle" value="estimation">
+        <!--<input id="estimation" type="radio" name="rtoggle" value="estimation">
         <label for="estimation">Estimation</label>
         <input id="simulation" type="radio" name="rtoggle" value="simulation" checked>
-        <label for="simulation">Simulation</label>
+        <label for="simulation">Simulation</label>-->
         <label for="slider-opacity">Opacity: </label>
         <input id="slider-opacity" type="range" min="0" max="100" step="1" value="75" list="steplist-opacity">
         <datalist id="steplist-opacity">
@@ -106,7 +106,7 @@
             ]
         });
 
-        map.addSource('video-simulation', {
+        /*map.addSource('video-simulation', {
             'type': 'video',
             'urls': [
                 'https://rafnuss-postdoc.github.io/BMM-US/assets/simulation_daily.webm'
@@ -118,35 +118,35 @@
                 [-125, 23]
             ]
         });
-
+        */
         map.addLayer({
             'id': 'satellite',
             'type': 'raster',
             'source': 'satellite'
         });
 
-        map.addLayer({
+        /*map.addLayer({
             'id': 'video-simulation',
             'type': 'raster',
             'source': 'video-simulation',
             paint: {
                 'raster-opacity': .7
             }
-        });
+        });*/
 
         map.addLayer({
             'id': 'video-estimation',
             'type': 'raster',
             'source': 'video-estimation',
-            layout: {
+            /*layout: {
                 'visibility': 'none',
-            },
+            },*/
             paint: {
-                'raster-opacity': .7
+                'raster-opacity': .8
             }
         });
 
-        document.getElementById('simulation').onclick = () => {
+        /*document.getElementById('simulation').onclick = () => {
             map.setLayoutProperty('video-simulation', 'visibility', 'visible');
             map.setLayoutProperty('video-estimation', 'visibility', 'none');
             videoSimHTML.currentTime = videoEstHTML.currentTime;
@@ -156,14 +156,14 @@
             map.setLayoutProperty('video-simulation', 'visibility', 'none');
             map.setLayoutProperty('video-estimation', 'visibility', 'visible');
             videoEstHTML.currentTime = videoSimHTML.currentTime;
-        };
+        };*/
 
         document.getElementById('slider-opacity').addEventListener('input', (e) => {
-            map.setPaintProperty(
+            /*map.setPaintProperty(
                 'video-simulation',
                 'raster-opacity',
                 parseInt(e.target.value, 10) / 100
-            )
+            )*/
             map.setPaintProperty(
                 'video-estimation',
                 'raster-opacity',
@@ -174,16 +174,16 @@
         document.getElementById('slider-speed').addEventListener('input', (e) => {
             let speed = Math.pow(2,e.target.value);
             videoEstHTML.playbackRate = speed
-            videoSimHTML.playbackRate = speed;
+            //videoSimHTML.playbackRate = speed;
             document.getElementById('speed-label').innerText = 'x'+speed
         });
 
         document.getElementById('slider-time').addEventListener('input', (e) => {
             videoEstHTML.currentTime = e.target.value*videoEstHTML.duration/365
-            videoSimHTML.currentTime = e.target.value*videoSimHTML.duration/365
+            //videoSimHTML.currentTime = e.target.value*videoSimHTML.duration/365
         });
 
-        var videoSimHTML=[]
+        //var videoSimHTML=[]
         var videoEstHTML=[]
 
         function myVideoUpdate(e) {
@@ -195,12 +195,12 @@
         }
 
         window.addEventListener('load', (event) => {
-            videoSimHTML = map.getSource('video-simulation').getVideo()
+            //videoSimHTML = map.getSource('video-simulation').getVideo()
             videoEstHTML = map.getSource('video-estimation').getVideo()
 
 
-            videoSimHTML.ontimeupdate = myVideoUpdate;
-            //videoEstHTML.ontimeupdate = myVideoUpdate;
+            //videoSimHTML.ontimeupdate = myVideoUpdate;
+            videoEstHTML.ontimeupdate = myVideoUpdate;
 
             map.fitBounds([
                 [-126, 22], // southwestern corner of the bounds
@@ -208,13 +208,13 @@
             ]);
             console.log('page is fully loaded');
             document.getElementById('playpause').addEventListener("click", function () {
-                videoSource = map.getSource('video-simulation')
+                videoSource = map.getSource('video-estimation')
                 videoHTML = videoSource.getVideo();
                 if (videoHTML.paused) {
-                    map.getSource('video-simulation').play()
+                    //map.getSource('video-simulation').play()
                     map.getSource('video-estimation').play()
                 } else {
-                    map.getSource('video-simulation').pause()
+                    //map.getSource('video-simulation').pause()
                     map.getSource('video-estimation').pause()
                 }
             })
