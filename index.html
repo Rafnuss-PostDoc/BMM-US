@@ -189,8 +189,8 @@
         function myVideoUpdate(e) {
             let r = e.target.currentTime/videoEstHTML.duration
             document.getElementById('slider-time').value = r*366
-            var date = new Date(2000, 0);
-            new Date(date.setDate(r*366+1));
+            var date = new Date(c, 0);
+            new Date(date.setDate(r*366+2));
             document.getElementById("time-label").innerHTML = date.toLocaleDateString("en-US", { weekday: undefined, year: 'numeric', month: 'long', day: 'numeric' });
         }
 
