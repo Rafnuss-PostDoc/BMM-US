@@ -78,6 +78,9 @@
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoicmFmbnVzcyIsImEiOiIzMVE1dnc0In0.3FNMKIlQ_afYktqki-6m0g';
 
+        var url = new URL(window.location.href);
+        var c = url.searchParams.get("y") ? url.searchParams.get("y") : "2010";
+
         const map = new mapboxgl.Map({
             container: 'map',
             minZoom: 2,
@@ -93,7 +96,7 @@
         map.addSource('video-estimation', {
             'type': 'video',
             'urls': [
-                'https://rafnuss-postdoc.github.io/BMM-US/assets/estimation_daily.webm'
+                'https://rafnuss-postdoc.github.io/BMM-US/assets/'+c+'.webm'
             ],
             'coordinates': [
                 [-125, 50],
