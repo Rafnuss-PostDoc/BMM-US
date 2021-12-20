@@ -46,7 +46,6 @@
             <option>75</option>
             <option>100</option>
         </datalist>
-        <button id="playpause">Play/pause</button>
         <label for="slider-speed">Speed: </label>
         <input id="slider-speed" type="range" min="-2" max="2" step="1" value="0" list="steplist-speed">
         <datalist id="steplist-speed">
@@ -58,7 +57,11 @@
         </datalist>
         <span id="speed-label">x1</span>
         <br>
-        <input id="slider-time" type="range" min="0" max="366" value="0" step="1" list="steplist-time" style="width: 75%;">
+        <button id="prev">&#60;</button>
+        <button id="playpause">|| / ></button>
+        <button id="next">&#62;</button>
+        <br>
+        <input id="slider-time" type="range" min="0" max="366" value="0" step="1" list="steplist-time" style="width: 70%;">
         <datalist id="steplist-time">
             <option>1</option>
             <option>32</option>
@@ -187,7 +190,7 @@
         var videoEstHTML=[]
 
         function myVideoUpdate(e) {
-            let r = e.target.currentTime/videoEstHTML.duration
+            let r = videoEstHTML.currentTime/videoEstHTML.duration
             document.getElementById('slider-time').value = r*366
             var date = new Date(c, 0);
             new Date(date.setDate(r*366+2));
@@ -208,15 +211,22 @@
             ]);
             console.log('page is fully loaded');
             document.getElementById('playpause').addEventListener("click", function () {
-                videoSource = map.getSource('video-estimation')
-                videoHTML = videoSource.getVideo();
-                if (videoHTML.paused) {
+                //videoSource = map.getSource('video-estimation')
+                //videoHTML = videoSource.getVideo();
+                if (videoEstHTML.paused) {
                     //map.getSource('video-simulation').play()
                     map.getSource('video-estimation').play()
                 } else {
                     //map.getSource('video-simulation').pause()
                     map.getSource('video-estimation').pause()
                 }
+            })
+            frameTime = 1.5
+            document.getElementById('next').addEventListener("click", function () {
+                videoEstHTML.currentTime = videoEstHTML.currentTime + frameTime
+            })
+            document.getElementById('prev').addEventListener("click", function () {
+                videoEstHTML.currentTime = videoEstHTML.currentTime - frameTime
             })
         });
 
