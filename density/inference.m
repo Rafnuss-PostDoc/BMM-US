@@ -20,7 +20,7 @@ grd = [396, 1779, 30, 1091, 2, 441, 366, 130, 55, 469, 670, 502, 1097, 193, 21, 
 radar = table(name,lat,lon,hei,grd,'VariableNames',{'name','lat','lon','height','dem'});
 
 if plotit
-    figure('position',[0 0 1600 900]);borders('states','color',[.2 .2 .2]*3);axis([-125 -68 23 50]); plot(radar.lon,radar.lat,'ok');
+    figure('position',[0 0 800 400]);borders('states','color',[.2 .2 .2]*3);axis([-125 -68 23 50]); plot(radar.lon,radar.lat,'ok');
     for i_r=1:height(radar)
         text(radar.lon(i_r),radar.lat(i_r),[radar.name{i_r} ' (' num2str(i_r) ')'],'VerticalAlignment','top','HorizontalAlignment','center')
     end
@@ -68,11 +68,13 @@ pq9 = splitapply(@(x) quantile(x,.9),vid(:),Y);
 thr_nnt = [-.93 .89];
 
 if plotit
-    figure; hold on;
+    figure('position',[0 0 800 400]); hold on;
     plot(E(1:end-1)+diff(E(1:2)),p,'-r');
     plot(E(1:end-1)+diff(E(1:2)),pq1,'--r');
     plot(E(1:end-1)+diff(E(1:2)),pq9,'--r');
-    xline(thr_nnt)
+    xline(thr_nnt,"-", "Threashold of night", "linewidth",2)
+    xlabel("Normalized Night time; -1 sunset, +1 sunrise")
+    ylabel("Bird density (bird/km^2)")
 end
 
 NNT(NNT<thr_nnt(1)|NNT>thr_nnt(2))=nan;
@@ -91,7 +93,7 @@ sum(~isnan(vid(~isnan(NNT))))
 
 sum(vid(~isnan(NNT))==0)
 % 9M data are exactly 0
-% figure; plot(splitapply(@(x) sum(x==0,'all','omitnan'),vid,g.time_doy));
+% figure('position',[0 0 800 400]); plot(splitapply(@(x) sum(x==0,'all','omitnan'),vid,g.time_doy));
 
 % Remove data equal to 0
 % Some 0 data might be due to no bird at all (e.g. rain), so potentially this
@@ -105,8 +107,11 @@ vid(vid==0)=nan;
 
 % visualize the datacoverage
 if plotit
-    figure; imagesc(datenum(g.time),1:146,log10(vid)','alphadata',vid'~=0);
-    datetick('x'); axis tight; xlabel('date'); ylabel('radar')
+    figure('position',[0 0 800 400]);
+    imagesc(datenum(g.time),1:146,log10(vid)','alphadata',vid'>0);
+    datetick('x'); axis tight; ylabel('Radar'); clim([0 3])
+    yticks(1:5:146); yticklabels(radar.name(1:5:end))
+    % exportgraphics(gca,"figures/inference/coverage.png","Resolution",300)
 end
 
 %% Remove day data
@@ -157,13 +162,16 @@ for i=1:3
 end
 
 if plotit
-    figure; hold on;
+    figure('position',[0 0 800 400]); hold on;
     plot(g.time_doy,vid.^exponant,'.k')
-    plot(vidL_doy_m,'-r')
+    plot(vidL_doy_m,'-r', linewidth=2)
     plot(vidL_doy_m+vidL_doy_std,'--r')
-    plot(thr_smooth,'g')
+    plot(thr_smooth,'g', linewidth=2)
     axis tight; xlabel('Day of year'); ylabel('Transformed density')
-    yline([10 1165].^exponant,'-b')
+    yline([10].^exponant,'-y', "10 bird/km^2", linewidth=2);
+    yline([1165].^exponant,'-b', "1'165 bird/km^2", linewidth=2);
+    %legend("raw data", "daily mean", "daily mean + 1 std", "Grubb's threshold")
+    % exportgraphics(gca,"figures/inference/grubbs.png","Resolution",300)
 end
 
 % Apply the correction: apply 0 as value are considered to be less than the
@@ -182,7 +190,7 @@ vidL_doy_std = splitapply(@(x) std(x(:),'omitnan'),vidOutliar0,g.time_doy);
 
 % normalize  based on day of year
 tp = (vidOutliar0 - vidL_doy_m(g.time_doy)) ./ vidL_doy_std(g.time_doy);
-% figure; histogram(tp)
+% figure('position',[0 0 800 400]); histogram(tp)
 
 % moving median of 12 hours (~1 night)
 tpo=tp;
@@ -198,12 +206,14 @@ tprm = tp;
 tprm(~id_rm)=nan;
 
 if plotit
-    figure; hold on;
+    figure('position',[0 0 800 400]); hold on;
     i_r=50;
     plot(g.time,tp(:,i_r));
     plot(g.time,tpom(:,i_r));
     plot(g.time,(10^exponant2 - vidL_doy_m(g.time_doy)) ./ vidL_doy_std(g.time_doy),'-b')
     plot(g.time,tprm(:,i_r),'xr');
+    legend("measurement", "moving-median","yearly pattern","outlier")
+    ylabel("Transformed bird density")
 end
 
 % Outiliar from the median should be smoothed from values arround.
@@ -217,7 +227,7 @@ if false
 
     % plot
     if plotit
-        figure; histogram(vidT_d_nb0);
+        figure('position',[0 0 800 400]); histogram(vidT_d_nb0);
         xlabel('Number of datapoint per night with valid value (i.e. not nan)')
     end
 
@@ -234,7 +244,7 @@ if false
     vidTd = splitapply(@(x) mean(x,'omitnan'),tp,g.day_id);
     vidTi = tp-vidTd(g.day_id,:);
 
-    % figure; plot(g.time_doy,vidTi,'.k')
+    % figure('position',[0 0 800 400]); plot(g.time_doy,vidTi,'.k')
 
     % Filter intra-night datapoint outside
     n = sum(~isnan(vidTi(:))&vidTi(:)~=0);
@@ -242,7 +252,7 @@ if false
     tval = tinv(alpha./n./2,n-2).^2;
     G = (n-1)/sqrt(n) * sqrt(tval./(n-2+tval));
     thr = abs(G*std(vidTi(:),'omitnan')+mean(vidTi(:),'omitnan'));
-    % figure; hold on; histogram(vidTi); xline(thr)
+    % figure('position',[0 0 800 400]); hold on; histogram(vidTi); xline(thr)
 
     id_rm=abs(vidTi)>1;
     cond=true;
@@ -260,12 +270,12 @@ if false
     end
 
     % check histogram
-    figure; tiledlayout('flow','TileSpacing','tight','Padding','tight');
+    figure('position',[0 0 800 400]); tiledlayout('flow','TileSpacing','tight','Padding','tight');
     nexttile; histogram(vidTd); title('daily'); axis tight;
     nexttile; histogram(vidTi); title('nightly'); axis tight;
 
     vidT_d_nb0 = splitapply(@(x) sum(~isnan(x)),tp,g.day_id);
-    figure; histogram(vidT_d_nb0)
+    figure('position',[0 0 800 400]); histogram(vidT_d_nb0)
     tmp = vidT_d_nb0<=4*3;
     vid(tmp(g.day_id,:))=nan;
 
@@ -372,12 +382,15 @@ vidT = ((vid.^trans.lambda-1)/trans.lambda - trans.ms(1)) / trans.ms(2);
 vidT(vid<trans.thr)=nan;
 
 if plotit
-    figure; hold on;
+    figure('position',[0 0 800 400]); hold on; grid on;
     ed = -2:.1:3;
     histogram(((vid.^trans.lambda-1)/trans.lambda - trans.ms(1)) / trans.ms(2),ed)
     histogram(vidT,ed)
-    xline(trans.thr_T,'linewidth',2)
-    plot(ed,normpdf(ed)*6000000,'linewidth',2)
+    xline(trans.thr_T,'-',"10 bird/km^2",'linewidth',2)
+    plot(ed,normpdf(ed)*5000000,'linewidth',2)
+    xlabel("Transformed bird density")
+    legend("Raw data", "Fitted upper tail", "Truncation threshold", "Fitted Gaussian")
+    % exportgraphics(gca,"figures/inference/truncation.png","Resolution",300)
 end
 
 %% STEP 3: Simulate the truncated value
@@ -393,7 +406,7 @@ while (cond)
         cond=false;
     end
 end
-% figure; histogram(X)
+% figure('position',[0 0 800 400]); histogram(X)
 
 
 % % Option 1: fill by distance
@@ -417,7 +430,7 @@ end
 % for i_r=1:height(radar)
 %     Ddt(:,i_r)=min(sqrt(Dtime + Ddist(i_r,:)),[],2);
 % end
-% %figure; plot(Ddt(:,1))
+% %figure('position',[0 0 800 400]); plot(Ddt(:,1))
 %
 % % Sort by distance
 % [~,id_s]=sort(Ddt(vidT0==0));
@@ -438,7 +451,7 @@ vidinterpout = fillmissing(vidinterp,'linear','MissingLocations',vid==0);
 assert(~all(vidinterpout(:)>trans.thr),'all value need to be below threshold')
 
 if plotit
-    figure; hold on;
+    figure('position',[0 0 800 400]); hold on;
     plot(vidinterpout(:,1),'.r')
     plot(vidinterp(:,1),'.k')
 end
@@ -457,13 +470,14 @@ vidTS(vid<trans.thr)=tmp;
 
 if plotit
     i_r =10;
-    figure; hold on;
+    figure('position',[0 0 800 400]); hold on;
     plot(g.time, vidTS(:,i_r),'r')
     plot(g.time, vidT(:,i_r),'k')
+    legend("Simulated lower tail", "Raw data")
 
-    figure; hold on;
-    histogram(vidTS,'EdgeAlpha',0)
-    histogram(vidT,'EdgeAlpha',0)
+%     figure('position',[0 0 800 400]); hold on;
+%     histogram(vidTS,'EdgeAlpha',0)
+%     histogram(vidT,'EdgeAlpha',0)
 end
 %% Distribution and transformation
 %
@@ -484,15 +498,15 @@ end
 % vidT = (vidth.^lambda-1)/lambda;
 %
 % % Illustration
-% figure;
+% figure('position',[0 0 800 400]);
 % subplot(2,1,1);histogram(vidth(:)); title('Histogram of threasholed density)'); axis tight
 % subplot(2,1,2);histfit(vidT(:)); title('Histogram of de-clutered (density)'); axis tight
 
 if plotit
-    figure;tiledlayout('flow','TileSpacing','tight','Padding','tight')
+    figure('position',[0 0 800 400]);tiledlayout('flow','TileSpacing','tight','Padding','tight')
     for i_doy=1:14:366
         nexttile; hold on;
-        histogram(vidTS(g.time_doy>i_doy&g.time_doy<(i_doy+7),:),-5:.1:15);
+        histogram(vidTS(g.time_doy>i_doy&g.time_doy<(i_doy+7),:),-5:.1:15,'EdgeColor','none');
         xlim([-5 5]); title(datestr(g.day(i_doy),'dd-mmm'))
     end
 end
@@ -552,7 +566,7 @@ vidTd = splitapply(@(x) mean(x,'omitnan'),vidTS,g.day_id);
 vidTi = vidT-vidTd(g.day_id,:);
 
 if plotit
-    figure;
+    figure('position',[0 0 800 400]);
     subplot(1,2,1);histogram(vidTd(:)); xlabel('Histogram of daily scale'); axis tight;
     subplot(1,2,2);histogram(vidTi(:)); xlabel('Histogram of intra-night scale'); axis tight;
 end
@@ -570,7 +584,7 @@ m=.05;
 axes_f = @(lon,lat) [((lon+125)/(125-68))-m/2 ((lat-23)/(50-23))-m/2 m m];
 
 if plotit
-    figure('position',[0 0 1600 900]); ha=tight_subplot(1,1,0,0,0);
+    figure('position',[0 0 800 400]); ha=tight_subplot(1,1,0,0,0);
     borders('states','-k','linewidth',2); axis([-125 -68 23 50])
 
     for i_r=1:height(radar)
@@ -613,13 +627,14 @@ itrend.nnt_std = interp1(m,tmp,1:366);
 % itrend.nnt_std(itrend.nnt_std<0.15)=0.15;
 
 if plotit
-    figure('position',[0 0 1400 900]);
+    figure('position',[0 0 800 400]);
     subplot(1,2,1);
     surf(itrend.axis_nnt,1:366,itrend.nnt_m,'EdgeColor','none');
-    xlabel('NNT'); ylabel('Day of year')
+    xlabel('NNT'); ylabel('Day of year'); title("Mean")
     subplot(1,2,2);
     surf(itrend.axis_nnt,1:366,itrend.nnt_std ,'EdgeColor','none');
-    xlabel('NNT'); ylabel('Day of year')
+    xlabel('NNT'); ylabel('Day of year'); title("Standard deviation")
+        % exportgraphics(gcf,"figures/inference/curve.png","Resolution",300)
 end
 
 %% Computing the daily curve amplitude and residual
@@ -645,14 +660,14 @@ vidTSd = splitapply(@(x) mean(x,'omitnan'),vidTSdc,g.day_id);
 vidTSi = (vidTSdc-vidTSd(g.day_id,:)) ./ itrend_nnt_std_vidti;
 
 if plotit
-    figure;
+    figure('position',[0 0 800 400]);
     subplot(2,1,1); histogram(vidTSd)
     subplot(2,1,2); histogram(vidTSi)
 
-    %figure; plot(NNT(:),vidTSi(:),'.k')
+    %figure('position',[0 0 800 400]); plot(NNT(:),vidTSi(:),'.k')
 
-    %figure; plot(g.time,vidTSi(:,1))
-    %figure; plot(g.day,vidTSd(:,1))
+    %figure('position',[0 0 800 400]); plot(g.time,vidTSi(:,1))
+    %figure('position',[0 0 800 400]); plot(g.day,vidTSd(:,1))
 end
 
 
@@ -778,7 +793,7 @@ if plotit
     nexttile; hold on; imagesc(dem_lon,dem_lat,dem)
     scatter(radar.lon,radar.lat,w/50,radar.height,'filled','MarkerEdgeColor','k'); colorbar;
     axis equal; axis([-125 -68 23 50])
-    demcmap([-1 3000]);
+    demcmap([-1 3000]); box on; 
     borders('states','k'); title('DEM and radar height')
 
     ax=nexttile; hold on; borders('states','k');
@@ -786,7 +801,7 @@ if plotit
     axis equal; axis([-125 -68 23 50]); colormap(ax,'parula');colorbar; % caxis([-1.1 1.1])
     title('Original Residual')
 
-    ax=nexttile; hold on;
+    ax=nexttile; hold on; grid on;
     scatter(radar.height-radar.demsm,mean(v2,'omitnan'),w/50,radar.lat,'o','filled'); lsline;
     xlabel('radar height - DEM smoothed'); ylabel('Normalized density'); c=colorbar;c.Label.String='Latitude'; colormap(ax,flipud(parula));
 
@@ -795,7 +810,7 @@ if plotit
     axis equal; axis([-125 -68 23 50]); colormap(ax,'parula');colorbar; caxis([-1.1 1.1])
     title('Residual accounting for height-dem')
 
-    ax=nexttile; hold on;
+    ax=nexttile; hold on; grid on;
     scatter(radar.demsm,mean_vidtd_hm,w/50,radar.lat,'o','filled'); lsline;
     xlabel('DEM smoothed'); ylabel('Normalized density'); c=colorbar;c.Label.String='Latitude'; colormap(ax,flipud(parula));
 
@@ -803,6 +818,26 @@ if plotit
     scatter(radar.lon,radar.lat,w/50,mean_vidtd_hm2,'o','filled')
     axis equal; axis([-125 -68 23 50]); colormap(ax,'parula');colorbar; caxis([-1.1 1.1])
     title('Residual accounting for dem')
+
+% figure('position',[0 0 800 600]);
+%     tiledlayout(2,2,'TileSpacing','tight','Padding','tight')
+%     
+%     nexttile([1 2]); hold on; imagesc(dem_lon,dem_lat,dem)
+%     borders('states','k'); title('DEM and radar height')
+%     scatter(radar.lon,radar.lat,w/50,radar.height,'filled','MarkerEdgeColor','k'); colorbar;
+%     axis equal; axis([-125 -68 23 50])
+%     demcmap([-1 3000]); box on; 
+%     
+% 
+%     ax=nexttile; hold on; grid on;
+%     scatter(radar.height-radar.demsm,mean(v2,'omitnan'),w/100,radar.lat,'o','filled'); l=lsline; l.LineWidth=2   ;
+%     xlabel('radar height - DEM smoothed'); ylabel('Normalized density'); colormap(ax,flipud(parula));
+% 
+%    
+%     ax=nexttile; hold on; grid on;
+%     scatter(radar.demsm,mean_vidtd_hm,w/100,radar.lat,'o','filled'); l=lsline; l.LineWidth=2   ;
+%     xlabel('DEM smoothed'); ylabel('Normalized density'); c=colorbar;c.Label.String='Latitude'; colormap(ax,flipud(parula));
+% exportgraphics(gca,"figures/inference/elevation.png","Resolution",300)
 
     figure('position',[0 0 675 675]); subplot(2,1,1); hold on
     imagesc(dem_lon(1:3:end),dem_lat(1:3:end),reshape(daytrend.f_dem(demsm(1:3:end,1:3:end)),size(demsm(1:3:end,1:3:end),1),[]));borders('states','k');
@@ -833,9 +868,9 @@ if plotit
         axis equal; axis([-125 -68 23 50]); caxis([-.5 .5])
     end
 
-    % figure; plot(year_mean);
-    % figure; hold on; plot(year_mean','.k'); plot(nanstd(year_mean),'.r','markersize',25)
-    % figure; boxplot(year_mean)
+    % figure('position',[0 0 800 400]); plot(year_mean);
+    % figure('position',[0 0 800 400]); hold on; plot(year_mean','.k'); plot(nanstd(year_mean),'.r','markersize',25)
+    % figure('position',[0 0 800 400]); boxplot(year_mean)
 end
 
 %% Step 4: Remove Spatio-temporal trend
@@ -997,7 +1032,7 @@ vidTSddt=v6;
 
 % i_s=365*20+round(linspace(30,350,5));
 % i_l=5;
-% figure; tiledlayout('flow','TileSpacing','tight','Padding','tight')
+% figure('position',[0 0 800 400]); tiledlayout('flow','TileSpacing','tight','Padding','tight')
 % for i_ss=1:numel(i_s)
 %     for i=i_s(i_ss)+(1:i_l)
 %         nexttile;
@@ -1127,7 +1162,7 @@ for i_d=1:numel(dcov.d)-1
             % tmp = cov(tmp1(tmp3) , tmp2(tmp3));
             % dcov.emp_grid(i_t,i_d,i_m) = tmp(2,1); % off diagonal element
 
-            % figure; plot(tmp1(tmp3),tmp2(tmp3),'.k')
+            % figure('position',[0 0 800 400]); plot(tmp1(tmp3),tmp2(tmp3),'.k')
         end
     end
 end
@@ -1190,9 +1225,9 @@ dcov.f_parm = @(x) [interp1(dcov_m, dcov_parm(1,:), x) ;...
 [tmpD,tmpT] = meshgrid(dcov.d(1):1:dcov.d(end),dcov.t(1):0.1:dcov.t(end));
 
 if plotit
-    figure('position',[0 0 1600 900]);
+    figure('position',[0 0 800 400]);
     tiledlayout('flow','TileSpacing','tight','Padding','tight')
-    for i_m=1:numel(dcov.m)
+    for i_m=1:3:numel(dcov.m)
         nexttile; hold on; title(datestr(datetime(1,1,dcov.m(i_m)),'dd-mmm'));
         s=surf(tmpD,tmpT,dcov.Gneiting_fx(tmpD, tmpT,dcov.f_parm(dcov.m(i_m)))); s.EdgeColor='none';
         % surf(cov.D_emp(:,:,i_m),cov.T_emp(:,:,i_m),cov.emp_grid(:,:,i_m));
@@ -1201,6 +1236,7 @@ if plotit
         view(3);
         plot3([0 0],[0 0],[dcov.parm(3,i_m) sum(dcov.parm(2:3,i_m))],'r', 'linewidth',2)
         plot3([0 0],[0 0],[sum(dcov.parm(2:3,i_m)) sum(dcov.parm(1:3,i_m))],'g', 'linewidth',2)
+        xlabel("distance (km)"); ylabel("time (days)")
     end
 
 
@@ -1272,7 +1308,7 @@ icov.t=0:Dtime:(2.5)/24;
 %icov.t=Dtime.*[0 1 5 10];
 
 
-% figure; hold on; histogram(diff(NNT)); xline(icov.t)
+% figure('position',[0 0 800 400]); hold on; histogram(diff(NNT)); xline(icov.t)
 
 [icov.D,icov.T]=meshgrid(icov.d(1:end-1)+diff(icov.d)/2,icov.t(1:end-1)+diff(icov.t)/2);
 
@@ -1381,9 +1417,9 @@ icov.f_parm = @(x) [interp1(icov_m, icov_parm(1,:), x, 'pchip') ;...
 [tmpD,tmpT] = meshgrid(icov.d(1):1:icov.d(end),icov.t(1):0.01:icov.t(end));
 
 if plotit
-    figure('position',[0 0 1600 900]);
+    figure('position',[0 0 800 400]);
     tiledlayout('flow','TileSpacing','tight','Padding','tight')
-    for i_m=1:numel(icov.m)
+    for i_m=6:3:numel(icov.m)-5
         nexttile; hold on; title(datestr(datetime(1,1,icov.m(i_m)),'dd-mmm'));
         s=surf(tmpD,tmpT,icov.Gneiting_fx(tmpD, tmpT,icov.f_parm(icov.m(i_m)))); s.EdgeColor='none';
         % surf(cov.D_emp(:,:,i_m),cov.T_emp(:,:,i_m),cov.emp_grid(:,:,i_m));
@@ -1391,6 +1427,7 @@ if plotit
         %xlabel('Distance [km]'); ylabel('Time [days]');
         view(3);
         plot3([0 0],[0 0],[sum(icov.parm(2,i_m)) sum(icov.parm(1:2,i_m))],'g', 'linewidth',2)
+        xlabel("distance (km)"); ylabel("duration (day)"); grid on
     end
 
 

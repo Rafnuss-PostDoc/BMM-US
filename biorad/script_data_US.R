@@ -21,7 +21,6 @@ ex <- matrix(nrow =length(radar.list), ncol = length(year.list), dimnames = list
 lat <- c()
 lon <- c()
 height <- c()
-vpts.prof <- matrix(nrow =length(radar.list), ncol = 50 )
 
 time_full <- seq(as.POSIXct('1995-01-01', tz="UTC"),as.POSIXct('2021-12-31 23:45', tz="UTC"), by=15*60)
 vid <- matrix(nrow =length(radar.list), ncol = length(time_full), dimnames = list(radar.list, format(time_full)))
@@ -44,7 +43,7 @@ if (FALSE){
 }
 
 
-#i_y=which(year.list==2018)
+# i_y=which(year.list==2018)
 # i_r = which(radar.list=="KBBX")
 
 for (i_y in 1:length(year.list)){
@@ -60,13 +59,14 @@ for (i_y in 1:length(year.list)){
     if (ex[i_r,i_y]){
       print(paste0(i_r,' ',filename))
       vpts <- readRDS(filename)
-      
       # plot(vpts[25000+(1:700)])
       
-      #lat[i_r]=vpts$attributes$where$lat
-      #lon[i_r]=vpts$attributes$where$lon
-      #height[i_r]=vpts$attributes$where$height
-
+      if (FALSE){
+        lat[i_r]=vpts$attributes$where$lat
+        lon[i_r]=vpts$attributes$where$lon
+        height[i_r]=vpts$attributes$where$height
+      }
+      
       sd_vvp_threshold(vpts) <- 0
 
       vpts.reg <- regularize_vpts(vpts,
@@ -78,13 +78,9 @@ for (i_y in 1:length(year.list)){
       
       vpts.reg.f = filter_dbzh(vpts.reg, threshold=500, height=2000, agl_max=Inf, drop=F, quantity="dens")
       
-      
-      # vpts.prof[i_r,] = rowSums(vpts.reg.f$data$dens,na.rm=T)
-      
-      vpits <-integrate_profile(vpts.reg.f, alt_min="antenna")
+      # vpits <- integrate_profile(vpts.reg.f, alt_min="antenna")
       
       # u=u+4*24*8
-      # 
       # m=100
       # par(mfrow=c(4,1), mar = c(2, 2, 0, 0))
       # span = u+(-m:m);
@@ -92,32 +88,31 @@ for (i_y in 1:length(year.list)){
       # plot(vpts.reg[span],quantity = 'DBZH')
       # plot(vpts.reg.f[span])
       # plot(vpits$datetime[span] ,vpits$vid[span],ylab="dens integrated",xaxs="i")
-      # 
-      # #
-      vid[i_r,index_time] = vpits$vid
-      viu[i_r,index_time] = vpits$u
-      viv[i_r,index_time] = vpits$v
-      viwu[i_r,index_time] = vpits$u_wind
-      viwv[i_r,index_time] = vpits$v_wind
+
+      # vid[i_r,index_time] = vpits$vid
+      # viu[i_r,index_time] = vpits$u
+      # viv[i_r,index_time] = vpits$v
+      # viwu[i_r,index_time] = vpits$u_wind
+      # viwv[i_r,index_time] = vpits$v_wind
       #viwv[i_r,index_time] = vpits$sd_vvp
       
-      # tmp <- t(vpts$data$eta)
-      # rownames(tmp) <- vpts$datetime
-      # colnames(tmp) <- vpts$height
+      tmp <- t(vpts.reg.f$data$eta)
+      rownames(tmp) <- vpts.reg.f$datetime
+      colnames(tmp) <- vpts.reg.f$height
+      tmp <- tmp[,rowSums(t(is.na(tmp)))!=dim(tmp)[1]]
+      write.csv(tmp,paste0('data/vpts-csv/',radar.list[i_r], year.list[i_y],'-eta.csv'))
+
+      # tmp <- t(vpts.reg.f$data$sd_vvp)
+      # rownames(tmp) <- vpts.reg.f$datetime
+      # colnames(tmp) <- vpts.reg.f$height
       # tmp <- tmp[,rowSums(t(is.na(tmp)))!=dim(tmp)[1]]
-      # write.csv(tmp,paste0('data/vpts-csv/',radar.list[i_r], year.list[i_y],'-eta.csv'))
-      # 
-      # tmp <- t(vpts$data$sd_vvp)
-      # rownames(tmp) <- vpts$datetime
-      # colnames(tmp) <- vpts$height
-      # tmp <- tmp[,rowSums(t(is.na(tmp)))!=dim(tmp)[1]]
-      # write.csv(tmp,paste0('data/vpts-csv/',radar.list[i_r], year.list[i_y],'-sdvvp.csv'))
+      # write.csv(tmp,paste0('data/vpts-csv/', radar.list[i_r], year.list[i_y],'-sdvvp.csv'))
       
-      # tmp <- t(vpts$data$airspeed)
-      # rownames(tmp) <- vpts$datetime
-      # colnames(tmp) <- vpts$height
-      # tmp <- tmp[,rowSums(t(is.na(tmp)))!=dim(tmp)[1]]
-      # write.csv(tmp,paste0('data/vpts-csv/',radar.list[i_r], year.list[i_y],'-airspeed.csv'))
+      tmp <- round(t(vpts.reg.f$data$airspeed),1)
+      rownames(tmp) <- vpts.reg.f$datetime
+      colnames(tmp) <- vpts.reg.f$height
+      tmp <- tmp[,rowSums(t(is.na(tmp)))!=dim(tmp)[1]]
+      write.csv(tmp,paste0('data/vpts-csv/', radar.list[i_r], year.list[i_y],'-airspeed.csv'))
     }
   }
   
@@ -133,21 +128,15 @@ write.csv(t(viwu),'data/viwu.csv',row.names = FALSE,col.names = FALSE)
 plot(ex)
 
 
-
-
+# Profiling
 profvis({
-  
   vpts <- readRDS(filename)
   vpts.reg <- regularize_vpts(vpts, interval = 15, units="mins")
-  
-  
-  
   vpits <-integrate_profile(vpts.reg)
-
 })
 
-plot(vpts$height,colSums(vpts.prof,na.rm = T))
 
+# Write to JSON
 vpts.exp <- vpts.reg
 attr(vpts.exp, "class") <- NULL
 vpts.exp$timesteps <-c()

@@ -1,4 +1,3 @@
-cd('/Users/raphael/Library/CloudStorage/Box-Box/BMM-US/')
 set(0, 'DefaultAxesBox', 'on');
 addpath(genpath('functions'))
 
@@ -27,6 +26,8 @@ asd=splitapply(@nansum,as.*vid,g.day_id) ./ vidd;
 
 % compute seasonal average of every year
 [season,~,season_id] = unique([g.day_doy>180 year(g.day)],'rows');
+vidd(g.day_doy<70|(g.day_doy>150&g.day_doy<200)|g.day_doy>320)=0;
+wsdw(g.day_doy<70|(g.day_doy>150&g.day_doy<200)|g.day_doy>320)=0;
 vids = splitapply(@(x)sum(x, 1,'omitnan'),vidd,season_id);
 gss=splitapply(@(x)sum(x, 1,'omitnan'),gsd.*vidd,season_id) ./ vids;
 wss=splitapply(@(x)sum(x, 1,'omitnan'),wsd.*vidd,season_id) ./ vids;
@@ -90,7 +91,7 @@ for i_p=1:numel(parm)
         axis equal tight;
         axis([min(radar.lon)-1 max(radar.lon)+1 min(radar.lat)-1 max(radar.lat)+1 ]);
         title(parm_name{i_p})
-        caxis([0 15]); 
+        clim([0 15]); 
         %c=colorbar;% c.Label.String="Spring-Autumn [m/s]";
         xticklabels('');yticklabels('');
         colormap(crameri('batlow'))
@@ -106,7 +107,7 @@ tiledlayout(1,1,'TileSpacing','tight','Padding','tight')
 borders('states','edgecolor','k','facecolor',[.8 .8 .8])
 axis equal tight;
 axis([min(radar.lon)-1 max(radar.lon)+1 min(radar.lat)-1 max(radar.lat)+1 ]);
-caxis([0 15]); 
+clim([0 15]); 
 %c=colorbar;% c.Label.String="Spring-Autumn [m/s]";
 xticklabels('');yticklabels('');
 colormap(crameri('batlow'))
@@ -124,7 +125,7 @@ for id_s=1:size(p,1)
     title(parm_name{i_p} + string(tt(id_s)))
 
 end
-end
+
 %%
 col_gwa = [  82, 43, 41;204, 164, 59;17, 138, 178;67, 100, 54; 228, 87, 46;204, 164, 59]/255;
 
